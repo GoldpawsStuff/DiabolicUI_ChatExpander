@@ -1,0 +1,22 @@
+## Interface: 30400
+
+## Title: DiabolicUI Mortal Edit
+## Notes: |cff666666By Lars Norberg.|r|n|nMortalhordewarrior's personal edits of DiabolicUI2.|n|n|cff4488ffPayPal|r|cffffffff:|r |n|cffffffffwww.paypal.me/GoldpawsStuff|r|n|n|cff4488ffPatreon|r|cffffffff:|r |n|cffffffffwww.patreon.com/GoldpawsStuff|r
+## Version: @project-version@
+## Author: Lars Norberg
+
+## X-Category: Interface Enhancements
+## X-License: All Rights Reserved
+
+## SavedVariables: DiabolicUI2MortalEdit_DB
+## Dependencies: DiabolicUI2
+
+# Load libraries
+Libs\Libs_Wrath.xml
+
+# Load main extension files
+Media.lua
+Main.lua
+
+# Load extension components
+Components\Components_Wrath.xml
