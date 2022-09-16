@@ -5,7 +5,7 @@ if (not DiabolicUI2) then
 end
 
 -- Default settings for all modules
-_G.DiabolicUI2MortalEdit_DB = {
+_G.DiabolicUI2ChatExpander_DB = {
 	Chat = {
 		Place = nil,
 		Size = nil,
