@@ -14,7 +14,7 @@ _G.DiabolicUI2ChatExpander_DB = {
 	}
 }
 
-ns.Extension = DiabolicUI2:NewModule(Addon, "LibMoreEvents-1.0")
+ns.Extension = DiabolicUI2:NewModule(Addon, "LibMoreEvents-1.0", "LibSharedMedia-3.0")
 
 ns.Extension.OnEvent = function(self, event, ...)
 end
