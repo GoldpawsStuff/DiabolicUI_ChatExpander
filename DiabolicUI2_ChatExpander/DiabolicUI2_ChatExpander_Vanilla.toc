@@ -6,10 +6,15 @@
 ## Author: Lars Norberg
 
 ## X-Category: Interface Enhancements
+## X-Embeds: LibSharedMedia-3.0
+## X-Curse-Project-ID:
+## X-Wago-ID:
 ## X-License: All Rights Reserved
 
 ## SavedVariables: DiabolicUI2ChatExpander_DB
 ## Dependencies: DiabolicUI2
+## OptionalDeps: LibSharedMedia-3.0
+
 
 # Load libraries
 Libs\Libs_Vanilla.xml
