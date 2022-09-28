@@ -19,7 +19,6 @@
 Libs\Libs.xml
 
 # Load main extension files
-Media.lua
 Main.lua
 
 # Load extension components

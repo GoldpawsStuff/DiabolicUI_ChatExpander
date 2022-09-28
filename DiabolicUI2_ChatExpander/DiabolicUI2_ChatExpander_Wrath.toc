@@ -20,7 +20,6 @@
 Libs\Libs_Wrath.xml
 
 # Load main extension files
-Media.lua
 Main.lua
 
 # Load extension components
