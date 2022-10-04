@@ -29,21 +29,58 @@ if (not DiabolicUI2) then
 	return
 end
 
+ns.Extension = DiabolicUI2:NewModule(Addon, "LibMoreEvents-1.0")
+
 -- Default settings for all modules
 _G.DiabolicUI2ChatExpander_DB = {
-	Chat = {
-		Place = nil,
-		Size = nil,
-		FontFamily = nil,
-		FontSize = nil
+	StoredFrames = {
+		--[1] = {
+		--	Place = nil,
+		--	Size = nil,
+		--	FontFamily = nil,
+		--	FontSize = nil
+		--}
 	}
 }
 
-ns.Extension = DiabolicUI2:NewModule(Addon, "LibMoreEvents-1.0")
+-- Purge deprecated settings,
+-- translate to new where applicable,
+-- make sure important ones are within bounds.
+local SanitizeSettings = function(db)
+	if (not db) then
+		return
+	end
+	db.Chat = nil -- was used during early development
+	-- retrieve Diabolic defaults
+
+end
+
+ns.Extension.StoreFrame = function(self, frame, ...)
+	local id = frame:GetID()
+	local db = self.db.StoredFrames[id]
+	if (not db) then
+		db = {
+			Place = nil,
+			Size = nil,
+			FontFamily = nil,
+			FontSize = nil
+		}
+		self.db.StoredFrames[id] = db
+	end
+end
+
+ns.Extension.RestoreFrame = function(self, frame, ...)
+	local id = frame:GetID()
+	local db = self.db.StoredFrames[id]
+	if (not db) then
+		return
+	end
+end
 
 ns.Extension.OnEvent = function(self, event, ...)
 end
 
 ns.Extension.OnInitialize = function(self)
+	self.db = SanitizeSettings(DiabolicUI2ChatExpander_DB)
 end
 
