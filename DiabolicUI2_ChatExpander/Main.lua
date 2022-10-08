@@ -55,28 +55,6 @@ local SanitizeSettings = function(db)
 
 end
 
-ns.Extension.StoreFrame = function(self, frame, ...)
-	local id = frame:GetID()
-	local db = self.db.StoredFrames[id]
-	if (not db) then
-		db = {
-			Place = nil,
-			Size = nil,
-			FontFamily = nil,
-			FontSize = nil
-		}
-		self.db.StoredFrames[id] = db
-	end
-end
-
-ns.Extension.RestoreFrame = function(self, frame, ...)
-	local id = frame:GetID()
-	local db = self.db.StoredFrames[id]
-	if (not db) then
-		return
-	end
-end
-
 ns.Extension.OnEvent = function(self, event, ...)
 end
 

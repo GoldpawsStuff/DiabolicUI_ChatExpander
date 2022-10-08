@@ -43,6 +43,9 @@ local FCF_SetButtonSide = FCF_SetButtonSide
 local FCF_UpdateButtonSide = FCF_UpdateButtonSide
 local IsMouseButtonDown = IsMouseButtonDown
 
+----------------------------------------
+-- Local Functions
+----------------------------------------
 local OnUpdate, OnDragStart, OnDragStop, StopDragging
 
 -- Return a value rounded to the nearest integer.
@@ -246,6 +249,9 @@ local OnUpdate = function(tab, elapsed)
 
 end
 
+----------------------------------------
+-- Diabolic Module Overrides
+----------------------------------------
 ChatFrames.OverrideDockingLocks = function(self)
 	--FCF_SetLocked(ChatFrame1, true)
 	--hooksecurefunc("FCF_ToggleLockOnDockedFrame", function()
@@ -299,6 +305,30 @@ ChatFrames.PostSetupChatFrames = function(self)
 	end
 end
 
+----------------------------------------
+-- Extension API
+----------------------------------------
+Chat.StoreFrame = function(self, frame, ...)
+	local id = frame:GetID()
+	local db = self.db.StoredFrames[id]
+	if (not db) then
+		db = {
+			Place = nil,
+			Size = nil,
+			FontFamily = nil,
+			FontSize = nil
+		}
+		self.db.StoredFrames[id] = db
+	end
+end
+
+Chat.RestoreFrame = function(self, frame, ...)
+	local id = frame:GetID()
+	local db = self.db.StoredFrames[id]
+	if (not db) then
+		return
+	end
+end
 
 Chat.OnEvent = function(self, event, ...)
 	if (event == "PLAYER_ENTERING_WORLD") then
