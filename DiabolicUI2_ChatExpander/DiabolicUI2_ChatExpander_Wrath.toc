@@ -15,7 +15,6 @@
 ## Dependencies: DiabolicUI2
 ## OptionalDeps: LibSharedMedia-3.0
 
-
 # Load libraries
 Libs\Libs_Wrath.xml
 
