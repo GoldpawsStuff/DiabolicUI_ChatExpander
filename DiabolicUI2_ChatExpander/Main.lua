@@ -31,34 +31,11 @@ end
 
 ns.Extension = DiabolicUI2:NewModule(Addon, "LibMoreEvents-1.0")
 
--- Default settings for all modules
-_G.DiabolicUI2ChatExpander_DB = {
-	StoredFrames = {
-		--[1] = {
-		--	Place = nil,
-		--	Size = nil,
-		--	FontFamily = nil,
-		--	FontSize = nil
-		--}
-	}
-}
-
--- Purge deprecated settings,
--- translate to new where applicable,
--- make sure important ones are within bounds.
-local SanitizeSettings = function(db)
-	if (not db) then
-		return
-	end
-	db.Chat = nil -- was used during early development
-	-- retrieve Diabolic defaults
-
-end
+_G.DiabolicUI2ChatExpander_DB = {}
 
 ns.Extension.OnEvent = function(self, event, ...)
 end
 
 ns.Extension.OnInitialize = function(self)
-	self.db = SanitizeSettings(DiabolicUI2ChatExpander_DB)
 end
 

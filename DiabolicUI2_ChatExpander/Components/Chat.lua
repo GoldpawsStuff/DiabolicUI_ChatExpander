@@ -30,6 +30,8 @@ local ChatFrames = DiabolicUI2:GetModule("ChatFrames")
 -- Lua API
 local _G = _G
 local ipairs = ipairs
+local pairs = pairs
+local unpack = unpack
 
 -- WoW API
 local GetCursorPosition = GetCursorPosition
@@ -138,7 +140,7 @@ local GetParsedPosition = function(frame)
 	return point, offsetX/frameScale, offsetY/frameScale
 end
 
-local OnDragStart = function(tab, button)
+OnDragStart = function(tab, button)
 
 	local frame = _G["ChatFrame"..tab:GetID()]
 	if (frame == DEFAULT_CHAT_FRAME) then
@@ -198,7 +200,7 @@ local OnDragStart = function(tab, button)
 
 end
 
-local OnDragStop = function(tab)
+OnDragStop = function(tab, dragButton)
 
 	local id = tab:GetID()
 	local frame = _G["ChatFrame"..id]
@@ -215,13 +217,12 @@ local OnDragStop = function(tab)
 		FCF_SetTabPosition(frame, 0)
 	end
 
-	-- TODO: Store scaled position and save in variables
-	local point, x, y = GetParsedPosition(frame)
+	Chat:StoreFrame(frame)
 
 	MOVING_CHATFRAME = nil -- taint?
 end
 
-local OnUpdate = function(tab, elapsed)
+OnUpdate = function(tab, elapsed)
 
 	local cursorX, cursorY = GetCursorPosition()
 	cursorX, cursorY = cursorX / UIParent:GetScale(), cursorY / UIParent:GetScale()
@@ -249,6 +250,13 @@ local OnUpdate = function(tab, elapsed)
 
 end
 
+local GetModuleSettings = function()
+	if (not DiabolicUI2ChatExpander_DB.StoredFrames) then
+		DiabolicUI2ChatExpander_DB.StoredFrames = {}
+	end
+	return DiabolicUI2ChatExpander_DB.StoredFrames
+end
+
 ----------------------------------------
 -- Diabolic Module Overrides
 ----------------------------------------
@@ -263,16 +271,20 @@ end
 
 ChatFrames.OverrideChatPositions = function(self)
 
-	local frame = _G.ChatFrame1
-	frame:SetUserPlaced(false)
-	frame:ClearAllPoints()
-	frame:SetSize(self:GetDefaultChatFrameSize())
-	frame:SetPoint(self:GetDefaultChatFramePosition())
-	frame.ignoreFramePositionManager = true
+	if (not GetModuleSettings()[1]) then
+		local frame = _G.ChatFrame1
+		frame:SetUserPlaced(false)
+		frame:ClearAllPoints()
+		frame:SetSize(self:GetDefaultChatFrameSize())
+		frame:SetPoint(self:GetDefaultChatFramePosition())
+		frame.ignoreFramePositionManager = true
+	end
 
 	local scaffold = self.frame
 	scaffold:ClearAllPoints()
 	scaffold:SetAllPoints(ChatFrame1)
+
+	Chat:RestoreAllFrames()
 
 end
 
@@ -297,9 +309,14 @@ ChatFrames.PostSetupChatFrames = function(self)
 	for _,frameName in ipairs(_G.CHAT_FRAMES) do
 		local frame = _G[frameName]
 		if (frame) then
+			--frame:SetClampRectInsets(-54, -54, -54, -310)
+			frame:SetFrameStrata("MEDIUM") -- bad idea?
+			frame:SetClampRectInsets(-54, -54, -54, -54)
+
 			local tab = frame.tab or _G[frameName .. "Tab"]
 			if (tab) then
-				tab:HookScript("OnDragStart", OnDragStart)
+				--tab:HookScript("OnDragStart", OnDragStart)
+				tab:SetScript("OnDragStart", OnDragStart)
 			end
 		end
 	end
@@ -309,8 +326,9 @@ end
 -- Extension API
 ----------------------------------------
 Chat.StoreFrame = function(self, frame, ...)
+
 	local id = frame:GetID()
-	local db = self.db.StoredFrames[id]
+	local db = GetModuleSettings()[id]
 	if (not db) then
 		db = {
 			Place = nil,
@@ -318,31 +336,45 @@ Chat.StoreFrame = function(self, frame, ...)
 			FontFamily = nil,
 			FontSize = nil
 		}
-		self.db.StoredFrames[id] = db
+		GetModuleSettings()[id] = db
 	end
+	db.Place = { GetParsedPosition(frame) }
+	db.Size = { frame:GetSize() }
 end
 
 Chat.RestoreFrame = function(self, frame, ...)
 	local id = frame:GetID()
-	local db = self.db.StoredFrames[id]
+	local db = GetModuleSettings()[id]
 	if (not db) then
 		return
 	end
+	frame:SetUserPlaced(false)
+	frame:ClearAllPoints()
+	frame:SetPoint(unpack(db.Place))
+	frame:SetSize(unpack(db.Size))
 end
 
-Chat.OnEvent = function(self, event, ...)
-	if (event == "PLAYER_ENTERING_WORLD") then
-		local isInitialLogin, isReloadingUi = ...
-		if (isInitialLogin or isReloadingUi) then
-			--ChatFrame1:Clear()
+Chat.RestoreAllFrames = function(self)
+	local frame
+	for id,db in pairs(GetModuleSettings()) do
+		frame = _G["ChatFrame"..id]
+		if (frame and frame:IsShown()) then
+			self:RestoreFrame(frame)
 		end
 	end
 end
 
+Chat.OnEvent = function(self, event, ...)
+	if (event == "ADDON_LOADED") then
+		local addon = ...
+		if (addon ~= Addon) then
+			return
+		end
+		self:UnregisterEvent("ADDON_LOADED", "OnEvent")
+	end
+	ChatFrames:OverrideChatPositions()
+end
+
 Chat.OnInitialize = function(self)
-	self.db = ns.Extension.db -- retrieve settings
-
-	--ChatFrames:PostSetupChatFrames()
-
-	self:RegisterEvent("PLAYER_ENTERING_WORLD", "OnEvent")
+	self:RegisterEvent("ADDON_LOADED", "OnEvent")
 end
