@@ -41,6 +41,7 @@ local FCFDock_GetChatFrames = FCFDock_GetChatFrames
 local FCFDock_GetInsertIndex = FCFDock_GetInsertIndex
 local FCFDock_HideInsertHighlight = FCFDock_HideInsertHighlight
 local FCFDock_PlaceInsertHighlight = FCFDock_PlaceInsertHighlight
+local FCF_SetLocked = FCF_SetLocked
 local FCF_SetTabPosition = FCF_SetTabPosition
 local FCF_SetButtonSide = FCF_SetButtonSide
 local FCF_UpdateButtonSide = FCF_UpdateButtonSide
@@ -49,8 +50,6 @@ local IsMouseButtonDown = IsMouseButtonDown
 ----------------------------------------
 -- Local Functions
 ----------------------------------------
-local OnUpdate, OnDragStart, OnDragStop, StopDragging
-
 -- Keeping it simple.
 local GetModuleSettings = function()
 	if (not DiabolicUI2ChatExpander_DB.StoredFrames) then
@@ -123,7 +122,60 @@ local GetPosition = function(frame)
 	return point, offsetX / frameScale, offsetY / frameScale
 end
 
-OnDragStart = function(tab, button)
+----------------------------------------
+-- Rewritten Blizzard API
+----------------------------------------
+local OnDragStop = function(tab, dragButton)
+
+	local id = tab:GetID()
+	local frame = _G["ChatFrame"..id]
+	frame:StopMovingOrSizing()
+	tab:UnlockHighlight()
+
+	FCFDock_HideInsertHighlight(GENERAL_CHAT_DOCK)
+
+	if (GENERAL_CHAT_DOCK:IsMouseOver(10, -10, 0, 10)) then
+		local mouseX, mouseY = GetCursorPosition()
+		mouseX, mouseY = mouseX / UIParent:GetScale(), mouseY / UIParent:GetScale()
+		FCF_DockFrame(frame, FCFDock_GetInsertIndex(GENERAL_CHAT_DOCK, frame, mouseX, mouseY), true)
+	else
+		FCF_SetTabPosition(frame, 0)
+	end
+
+	Chat:StoreFrame(frame)
+
+	MOVING_CHATFRAME = nil
+end
+
+local OnUpdate = function(tab, elapsed)
+
+	local cursorX, cursorY = GetCursorPosition()
+	cursorX, cursorY = cursorX / UIParent:GetScale(), cursorY / UIParent:GetScale()
+
+	local frame = _G["ChatFrame"..tab:GetID()]
+	if (frame ~= GENERAL_CHAT_DOCK.primary and GENERAL_CHAT_DOCK:IsMouseOver(10, -10, 0, 10)) then
+		FCFDock_PlaceInsertHighlight(GENERAL_CHAT_DOCK, frame, cursorX, cursorY)
+	else
+		FCFDock_HideInsertHighlight(GENERAL_CHAT_DOCK)
+	end
+
+	FCF_UpdateButtonSide(frame)
+
+	if (frame == GENERAL_CHAT_DOCK.primary or not frame.isLocked) then
+		for _, frame in pairs(FCFDock_GetChatFrames(GENERAL_CHAT_DOCK)) do
+			FCF_SetButtonSide(frame, FCF_GetButtonSide(GENERAL_CHAT_DOCK.primary))
+		end
+	end
+
+	if (not IsMouseButtonDown(tab.dragButton)) then
+		OnDragStop(tab, tab.dragButton)
+		tab.dragButton = nil
+		tab:SetScript("OnUpdate", nil)
+	end
+
+end
+
+local OnDragStart = function(tab, button)
 
 	local frame = _G["ChatFrame"..tab:GetID()]
 	if (frame == DEFAULT_CHAT_FRAME) then
@@ -160,7 +212,9 @@ OnDragStart = function(tab, button)
 		MOVING_CHATFRAME = frame
 		SELECTED_CHAT_FRAME = frame
 
-		Blizzard_CombatLog_Update_QuickButtons()
+		if (Blizzard_CombatLog_Update_QuickButtons) then
+			Blizzard_CombatLog_Update_QuickButtons()
+		end
 
 	else
 		if (frame.isLocked) then
@@ -183,58 +237,8 @@ OnDragStart = function(tab, button)
 
 end
 
-OnDragStop = function(tab, dragButton)
-
-	local id = tab:GetID()
-	local frame = _G["ChatFrame"..id]
-	frame:StopMovingOrSizing()
-	tab:UnlockHighlight()
-
-	FCFDock_HideInsertHighlight(GENERAL_CHAT_DOCK)
-
-	if (GENERAL_CHAT_DOCK:IsMouseOver(10, -10, 0, 10)) then
-		local mouseX, mouseY = GetCursorPosition()
-		mouseX, mouseY = mouseX / UIParent:GetScale(), mouseY / UIParent:GetScale()
-		FCF_DockFrame(frame, FCFDock_GetInsertIndex(GENERAL_CHAT_DOCK, frame, mouseX, mouseY), true)
-	else
-		FCF_SetTabPosition(frame, 0)
-	end
-
-	Chat:StoreFrame(frame)
-
-	MOVING_CHATFRAME = nil -- taint?
-end
-
-OnUpdate = function(tab, elapsed)
-
-	local cursorX, cursorY = GetCursorPosition()
-	cursorX, cursorY = cursorX / UIParent:GetScale(), cursorY / UIParent:GetScale()
-
-	local frame = _G["ChatFrame"..tab:GetID()]
-	if (frame ~= GENERAL_CHAT_DOCK.primary and GENERAL_CHAT_DOCK:IsMouseOver(10, -10, 0, 10)) then
-		FCFDock_PlaceInsertHighlight(GENERAL_CHAT_DOCK, frame, cursorX, cursorY)
-	else
-		FCFDock_HideInsertHighlight(GENERAL_CHAT_DOCK)
-	end
-
-	FCF_UpdateButtonSide(frame)
-
-	if (frame == GENERAL_CHAT_DOCK.primary or not frame.isLocked) then
-		for _, frame in pairs(FCFDock_GetChatFrames(GENERAL_CHAT_DOCK)) do
-			FCF_SetButtonSide(frame, FCF_GetButtonSide(GENERAL_CHAT_DOCK.primary))
-		end
-	end
-
-	if (not IsMouseButtonDown(tab.dragButton)) then
-		OnDragStop(tab, tab.dragButton)
-		tab.dragButton = nil
-		tab:SetScript("OnUpdate", nil)
-	end
-
-end
-
 ----------------------------------------
--- Diabolic Module Overrides
+-- Diabolic Overrides & Callbacks
 ----------------------------------------
 local ChatFrames_OverrideDockingLocks = ChatFrames.OverrideDockingLocks
 ChatFrames.OverrideDockingLocks = function(self, ...)
