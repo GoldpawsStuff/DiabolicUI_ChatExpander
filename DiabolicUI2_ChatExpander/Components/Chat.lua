@@ -24,13 +24,14 @@
 
 --]]
 local Addon, ns = ...
-local Chat = ns.Extension:NewModule("Chat", "LibMoreEvents-1.0", "")
+local Chat = ns.Extension:NewModule("Chat", "LibMoreEvents-1.0", "AceConsole-3.0")
 local ChatFrames = DiabolicUI2:GetModule("ChatFrames")
 
 -- Lua API
 local _G = _G
 local ipairs = ipairs
 local pairs = pairs
+local string_lower = string.lower
 local unpack = unpack
 
 -- WoW API
@@ -257,6 +258,7 @@ ChatFrames.OverrideChatPositions = function(self, ...)
 		frame:SetSize(self:GetDefaultChatFrameSize())
 		frame:SetPoint(self:GetDefaultChatFramePosition())
 		frame.ignoreFramePositionManager = true
+		FCF_SetLocked(frame, true)
 	end
 
 	-- Attach the scaffold to the primary frame
@@ -300,7 +302,7 @@ ChatFrames.OverrideChatFont = function(self, frame, ...)
 end
 
 local ChatFrames_PostSetupChatFrames = ChatFrames.PostSetupChatFrames
-ChatFrames.PostSetupChatFrames = function(self)
+ChatFrames.PostSetupChatFrames = function(self, ...)
 
 	-- This is called after each time DiabolicUI
 	-- has setup one or several chat frames.
@@ -376,7 +378,7 @@ Chat.RestoreAllFrames = function(self)
 			if (not GetModuleSettings()[id]) then
 				local name, fontSize, r, g, b, a, shown, locked, docked, uninteractable = FCF_GetChatWindowInfo(id)
 				if (id ~= 1 and not docked and not frame.minimized) then
-					FCF_DockFrame(frame, true)
+					FCF_DockFrame(frame)
 				end
 			end
 		end
@@ -404,9 +406,8 @@ Chat.ResetChat = function(self, input)
 		end
 	end
 	if (needsUpdate) then
-		self:OverrideChatPositions()
+		ChatFrames:OverrideChatPositions()
 	end
-
 end
 
 Chat.OnEvent = function(self, event, ...)
