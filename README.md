@@ -3,9 +3,9 @@
 [![discord](https://www.goldpawsstuff.com/shared/img/common/dd-button.png)](https://discord.gg/MUSfWXd)
 [![twitter](https://www.goldpawsstuff.com/shared/img/common/tw-button.png)](https://twitter.com/GoldpawsStuff)
 
-This is an extension for DiabolicUI that adds movement and resizing to the chat frames, something DiabolicUI normally does not allow.
+This is an extension for [DiabolicUI](https://www.curseforge.com/wow/addons/diabolicui) that adds movement and resizing to the chat frames, something not usually allowed there. This extension requires [DiabolicUI](https://www.curseforge.com/wow/addons/diabolicui) to be present.
 
-The features in this DiabolicUI extension were requested by the [YouTube streamer Mortalhordewarrior](https://www.youtube.com/channel/UCM1iVH2WQObUFVaUDKNC9BA)!
+The features in this DiabolicUI extension were requested by the YouTube streamer [Mortalhordewarrior](https://www.youtube.com/channel/UCM1iVH2WQObUFVaUDKNC9BA)!
 
 ## Current Features
 - Allows unlocking and movement of all chat windows.
