@@ -24,7 +24,7 @@
 
 --]]
 local Addon, ns = ...
-local Chat = ns.Extension:NewModule("Chat", "LibMoreEvents-1.0")
+local Chat = ns.Extension:NewModule("Chat", "LibMoreEvents-1.0", "")
 local ChatFrames = DiabolicUI2:GetModule("ChatFrames")
 
 -- Lua API
@@ -50,20 +50,16 @@ local IsMouseButtonDown = IsMouseButtonDown
 ----------------------------------------
 local OnUpdate, OnDragStart, OnDragStop, StopDragging
 
--- Return a value rounded to the nearest integer.
-local round = function(value, precision)
-	if (precision) then
-		value = value * 10^precision
-		value = (value + .5) - (value + .5)%1
-		value = value / 10^precision
-		return value
-	else
-		return (value + .5) - (value + .5)%1
+-- Keeping it simple.
+local GetModuleSettings = function()
+	if (not DiabolicUI2ChatExpander_DB.StoredFrames) then
+		DiabolicUI2ChatExpander_DB.StoredFrames = {}
 	end
+	return DiabolicUI2ChatExpander_DB.StoredFrames
 end
 
 -- Convert a coordinate within a frame to a usable position
-local parse = function(parentWidth, parentHeight, x, y, bottomOffset, leftOffset, topOffset, rightOffset)
+local GetParsedPosition = function(parentWidth, parentHeight, x, y, bottomOffset, leftOffset, topOffset, rightOffset)
 	if (y < parentHeight * 1/3) then
 		if (x < parentWidth * 1/3) then
 			return "BOTTOMLEFT", leftOffset, bottomOffset
@@ -91,41 +87,27 @@ local parse = function(parentWidth, parentHeight, x, y, bottomOffset, leftOffset
 	end
 end
 
-local GetParsedPosition = function(frame)
+-- Retrieve a properly scaled position of a frame.
+local GetPosition = function(frame)
 
-	-- Retrieve UI coordinates
+	-- Retrieve UI coordinates, convert to unscaled screen coordinates
 	local worldHeight = 768 -- WorldFrame:GetHeight()
 	local worldWidth = WorldFrame:GetWidth()
 	local uiScale = UIParent:GetEffectiveScale()
-	local uiWidth, uiHeight = UIParent:GetSize()
-	local uiBottom = UIParent:GetBottom()
-	local uiLeft = UIParent:GetLeft()
-	local uiTop = UIParent:GetTop()
-	local uiRight = UIParent:GetRight()
+	local uiWidth = UIParent:GetWidth() * uiScale
+	local uiHeight = UIParent:GetHeight() * uiScale
+	local uiBottom = UIParent:GetBottom() * uiScale
+	local uiLeft = UIParent:GetLeft() * uiScale
+	local uiTop = UIParent:GetTop() * uiScale - worldHeight -- use values relative to edges, not origin
+	local uiRight = UIParent:GetRight() * uiScale - worldWidth -- use values relative to edges, not origin
 
-	-- Turn UI coordinates into unscaled screen coordinates
-	uiWidth = uiWidth*uiScale
-	uiHeight = uiHeight*uiScale
-	uiBottom = uiBottom*uiScale
-	uiLeft = uiLeft*uiScale
-	uiTop = uiTop*uiScale - worldHeight -- use values relative to edges, not origin
-	uiRight = uiRight*uiScale - worldWidth -- use values relative to edges, not origin
-
-	-- Retrieve frame coordinates
+	-- Retrieve frame coordinates, convert to unscaled screen coordinates
 	local frameScale = frame:GetEffectiveScale()
-	local x, y = frame:GetCenter()
-	local bottom = frame:GetBottom()
-	local left = frame:GetLeft()
-	local top = frame:GetTop()
-	local right = frame:GetRight()
-
-	-- Turn frame coordinates into unscaled screen coordinates
-	x = x*frameScale
-	y = y*frameScale
-	bottom = bottom*frameScale
-	left = left*frameScale
-	top = top*frameScale - worldHeight -- use values relative to edges, not origin
-	right = right*frameScale - worldWidth -- use values relative to edges, not origin
+	local x, y = frame:GetCenter(); x = x * frameScale; y = y * frameScale
+	local bottom = frame:GetBottom() * frameScale
+	local left = frame:GetLeft() * frameScale
+	local top = frame:GetTop() * frameScale - worldHeight -- use values relative to edges, not origin
+	local right = frame:GetRight() * frameScale - worldWidth -- use values relative to edges, not origin
 
 	-- Figure out the frame position relative to UIParent
 	left = left - uiLeft
@@ -134,10 +116,10 @@ local GetParsedPosition = function(frame)
 	top = top - uiTop
 
 	-- Figure out the point within the given coordinate space
-	local point, offsetX, offsetY = parse(uiWidth, uiHeight, x, y, bottom, left, top, right)
+	local point, offsetX, offsetY = GetParsedPosition(uiWidth, uiHeight, x, y, bottom, left, top, right)
 
 	-- Convert coordinates to the frame's scale.
-	return point, offsetX/frameScale, offsetY/frameScale
+	return point, offsetX / frameScale, offsetY / frameScale
 end
 
 OnDragStart = function(tab, button)
@@ -250,27 +232,24 @@ OnUpdate = function(tab, elapsed)
 
 end
 
-local GetModuleSettings = function()
-	if (not DiabolicUI2ChatExpander_DB.StoredFrames) then
-		DiabolicUI2ChatExpander_DB.StoredFrames = {}
-	end
-	return DiabolicUI2ChatExpander_DB.StoredFrames
-end
-
 ----------------------------------------
 -- Diabolic Module Overrides
 ----------------------------------------
-ChatFrames.OverrideDockingLocks = function(self)
-	--FCF_SetLocked(ChatFrame1, true)
-	--hooksecurefunc("FCF_ToggleLockOnDockedFrame", function()
-	--	for _, frame in pairs(FCFDock_GetChatFrames(_G.GENERAL_CHAT_DOCK)) do
-	--		FCF_SetLocked(frame, true)
-	--	end
-	--end)
+local ChatFrames_OverrideDockingLocks = ChatFrames.OverrideDockingLocks
+ChatFrames.OverrideDockingLocks = function(self, ...)
+	-- This is where Diabolic forces the chat frames to always be locked.
+	-- We're overriding this by having this method exist at all.
+
+	if (ChatFrames_OverrideDockingLocks) then
+		ChatFrames_OverrideDockingLocks(self, ...)
+	end
 end
 
-ChatFrames.OverrideChatPositions = function(self)
+local ChatFrames_OverrideChatPositions = ChatFrames.OverrideChatPositions
+ChatFrames.OverrideChatPositions = function(self, ...)
 
+	-- Put the primary frame in Diabolic's default position
+	-- if no saved position is found for it.
 	if (not GetModuleSettings()[1]) then
 		local frame = _G.ChatFrame1
 		frame:SetUserPlaced(false)
@@ -280,45 +259,72 @@ ChatFrames.OverrideChatPositions = function(self)
 		frame.ignoreFramePositionManager = true
 	end
 
+	-- Attach the scaffold to the primary frame
 	local scaffold = self.frame
 	scaffold:ClearAllPoints()
 	scaffold:SetAllPoints(ChatFrame1)
 
+	-- Restore all saved frames
 	Chat:RestoreAllFrames()
 
+	if (ChatFrames_OverrideChatPositions) then
+		ChatFrames_OverrideChatPositions(self, ...)
+	end
 end
 
+local ChatFrames_OverrideChatFont = ChatFrames.OverrideChatFont
 ChatFrames.OverrideChatFont = function(self, frame, ...)
+	-- This method is hooked to frame:SetFont(),
+	-- so take care to avoid an infinite loop here.
 	if (not frame or frame._templock) then
 		return
 	end
+
+	-- Set a temporary lock flag
 	frame._templock = true
 
+	-- Apply our selected font changes.
+	-- These are currently the same as Diabolic's default.
 	local fontObject = frame:GetFontObject()
 	local font, size, style = fontObject:GetFont()
 	fontObject:SetFont(font, size, "OUTLINE")
-	fontObject:SetShadowColor(0,0,0,.5)
+	fontObject:SetShadowColor(0, 0, 0, .5)
 	fontObject:SetShadowOffset(-.75, -.75)
-	--fontObject:SetFont(font, size, "")
-	--fontObject:SetShadowColor(0,0,0,.75)
 
+	-- Clear the temporary lock flag
 	frame._templock = nil
+
+	if (ChatFrames_OverrideChatFont) then
+		ChatFrames_OverrideChatFont(self, frame, ...)
+	end
 end
 
+local ChatFrames_PostSetupChatFrames = ChatFrames.PostSetupChatFrames
 ChatFrames.PostSetupChatFrames = function(self)
-	for _,frameName in ipairs(_G.CHAT_FRAMES) do
+
+	-- This is called after each time DiabolicUI
+	-- has setup one or several chat frames.
+	for _,frameName in pairs(_G.CHAT_FRAMES) do
 		local frame = _G[frameName]
 		if (frame) then
-			--frame:SetClampRectInsets(-54, -54, -54, -310)
-			frame:SetFrameStrata("MEDIUM") -- bad idea?
+
+			-- Put the frame above the actionbar artwork.
+			frame:SetFrameStrata("MEDIUM")
+
+			-- Allow movement to the bottom of the screen
 			frame:SetClampRectInsets(-54, -54, -54, -54)
 
+			-- Replace the frame's drag handler,
+			-- as we're using our own system to handle our own scale.
 			local tab = frame.tab or _G[frameName .. "Tab"]
 			if (tab) then
-				--tab:HookScript("OnDragStart", OnDragStart)
 				tab:SetScript("OnDragStart", OnDragStart)
 			end
 		end
+	end
+
+	if (ChatFrames_PostSetupChatFrames) then
+		ChatFrames_PostSetupChatFrames(self, ...)
 	end
 end
 
@@ -326,7 +332,6 @@ end
 -- Extension API
 ----------------------------------------
 Chat.StoreFrame = function(self, frame, ...)
-
 	local id = frame:GetID()
 	local db = GetModuleSettings()[id]
 	if (not db) then
@@ -338,8 +343,9 @@ Chat.StoreFrame = function(self, frame, ...)
 		}
 		GetModuleSettings()[id] = db
 	end
-	db.Place = { GetParsedPosition(frame) }
+	db.Place = { GetPosition(frame) }
 	db.Size = { frame:GetSize() }
+	db.Scale = { frame:GetEffectiveScale() }
 end
 
 Chat.RestoreFrame = function(self, frame, ...)
@@ -362,6 +368,45 @@ Chat.RestoreAllFrames = function(self)
 			self:RestoreFrame(frame)
 		end
 	end
+	-- Dock any floating frames not currently saved in the addon.
+	for _,frameName in pairs(_G.CHAT_FRAMES) do
+		local frame = _G[frameName]
+		if (frame and frame:IsShown()) then
+			local id = frame:GetID()
+			if (not GetModuleSettings()[id]) then
+				local name, fontSize, r, g, b, a, shown, locked, docked, uninteractable = FCF_GetChatWindowInfo(id)
+				if (id ~= 1 and not docked and not frame.minimized) then
+					FCF_DockFrame(frame, true)
+				end
+			end
+		end
+	end
+end
+
+Chat.ResetChat = function(self, input)
+	local all
+	local args = { self:GetArgs(string_lower(input)) }
+	for _,arg in ipairs(args) do
+		if (arg == "all") then
+			all = true
+		end
+	end
+	local needsUpdate
+	if (all) then
+		for id in pairs(GetModuleSettings()) do
+			GetModuleSettings()[id] = nil
+			needsUpdate = true
+		end
+	else
+		if (GetModuleSettings()[1]) then
+			GetModuleSettings()[1] = nil
+			needsUpdate = true
+		end
+	end
+	if (needsUpdate) then
+		self:OverrideChatPositions()
+	end
+
 end
 
 Chat.OnEvent = function(self, event, ...)
@@ -376,5 +421,6 @@ Chat.OnEvent = function(self, event, ...)
 end
 
 Chat.OnInitialize = function(self)
+	self:RegisterChatCommand("resetchat", "ResetChat")
 	self:RegisterEvent("ADDON_LOADED", "OnEvent")
 end
