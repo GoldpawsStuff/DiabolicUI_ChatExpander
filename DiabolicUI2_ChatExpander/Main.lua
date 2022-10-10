@@ -38,4 +38,3 @@ end
 
 ns.Extension.OnInitialize = function(self)
 end
-
