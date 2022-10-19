@@ -4,5 +4,9 @@ All notable changes to this project will be documented in this file. Be aware th
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.0.1-RC] 2022-10-19
+### Fixed
+- Fixed an issue where the chat window buttons would sometime appear at the wrong side.
+
 ## [1.0.0-RC] 2022-10-11
 - First public release.
