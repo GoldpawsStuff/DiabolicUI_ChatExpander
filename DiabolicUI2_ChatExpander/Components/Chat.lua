@@ -263,6 +263,7 @@ ChatFrames.OverrideChatPositions = function(self, ...)
 		frame:SetPoint(self:GetDefaultChatFramePosition())
 		frame.ignoreFramePositionManager = true
 		FCF_SetLocked(frame, true)
+		FCF_UpdateButtonSide(frame)
 	end
 
 	-- Attach the scaffold to the primary frame
@@ -364,6 +365,7 @@ Chat.RestoreFrame = function(self, frame, ...)
 	frame:ClearAllPoints()
 	frame:SetPoint(unpack(db.Place))
 	frame:SetSize(unpack(db.Size))
+	FCF_UpdateButtonSide(frame)
 end
 
 Chat.RestoreAllFrames = function(self)
