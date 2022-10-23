@@ -1,6 +1,6 @@
 ## Interface: 11403
 
-## Title: DiabolicUI Chat Mover
+## Title: |TInterface\Addons\DiabolicUI2\Assets\diabolic-lettermark.tga:16:16:0:0:512:512:90:422:90:422|t |cffaa0022Diabolic|r|cfffafafaUI|r |cffccccccChat Mover|r
 ## Notes: |cff666666By Lars Norberg.|r|n|nMakes the chat frames movable and resizable|nwhen using DiabolicUI.|n|nFully based on Mortalhordewarrior's|nrequested chat edits of DiabolicUI2.|n|n|cff4488ffPayPal|r|cffffffff:|r |n|cffffffffwww.paypal.me/GoldpawsStuff|r|n|n|cff4488ffPatreon|r|cffffffff:|r |n|cffffffffwww.patreon.com/GoldpawsStuff|r
 ## Version: @project-version@
 ## Author: Lars Norberg
