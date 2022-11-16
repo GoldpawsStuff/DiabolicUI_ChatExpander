@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file. Be aware th
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.0.5-RC] 2022-11-16
+- Bump to retail client patch 10.0.2.
+
 ## [1.0.4-RC] 2022-10-28
 ### Changed
 - Minor cosmetic change to the addon listing display name for consistency.
